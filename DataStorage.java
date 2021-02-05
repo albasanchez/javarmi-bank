@@ -24,6 +24,8 @@ public class DataStorage {
         return connection;
     }
 
+    // USER
+
     public boolean checkUserDocument(Connection con, String documentID) {
         try {
             Statement stmt = con.createStatement();
@@ -38,33 +40,7 @@ public class DataStorage {
                 return false;
             }
         } catch (SQLException ex) {
-            System.out.println("Error al realizar el login del usuario " + documentID);
-            System.out.println(ex.getMessage());
-            return false;
-        }
-    }
-
-    public boolean getUserAccounts(Connection con, String user_id) {
-        try {
-            Statement stmt = con.createStatement();
-            String sql = "SELECT document_id, COUNT(JRMI_ACCOUNT.number) AS accounts FROM JRMI_USER LEFT OUTER JOIN JRMI_ACCOUNT ON document_id=fk_user WHERE document_id = '"
-                    + user_id + "' GROUP BY document_id;";
-            ResultSet rs = stmt.executeQuery(sql);
-
-            if (rs.next()) {
-                int accounts = rs.getInt("accounts");
-                rs.close();
-                if (accounts < 3) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                rs.close();
-                return false;
-            }
-        } catch (SQLException ex) {
-            System.out.println("Error al consultar las cuentas del usuario " + user_id);
+            System.out.println("Error al revisar el documento del usuario " + documentID);
             System.out.println(ex.getMessage());
             return false;
         }
@@ -110,6 +86,34 @@ public class DataStorage {
         }
     }
 
+    // ACCOUNTS
+
+    public boolean checkUserAccountLimit(Connection con, String user_id) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT document_id, COUNT(JRMI_ACCOUNT.number) AS accounts FROM JRMI_USER LEFT OUTER JOIN JRMI_ACCOUNT ON document_id=fk_user WHERE document_id = '"
+                    + user_id + "' GROUP BY document_id;";
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                int accounts = rs.getInt("accounts");
+                rs.close();
+                if (accounts < 3) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                rs.close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al consultar las cuentas del usuario " + user_id);
+            System.out.println(ex.getMessage());
+            return false;
+        }
+    }
+
     public Number createAccount(Connection con, Number current_balance, String document_id) {
         try {
             Statement stmt = con.createStatement();
@@ -126,6 +130,127 @@ public class DataStorage {
             System.out.println("Error al registrar la cuenta del usuario " + document_id);
             System.out.println(ex.getMessage());
             return 0;
+        }
+    }
+
+    public String[] getUserAccounts(Connection con, String document_id) {
+        String[] accounts = new String[3];
+        int num = 0;
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT * FROM JRMI_ACCOUNT WHERE FK_USER = '" + document_id + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                String account_number = rs.getString("number");
+                accounts[num] = account_number;
+                num++;
+            }
+            return accounts;
+        } catch (SQLException ex) {
+            System.out.println("Error solicitar las cuentas del usuario " + document_id);
+            System.out.println(ex.getMessage());
+            return new String[0];
+        }
+    }
+
+    public double getAccountBalance(Connection con, String document_id, Number account) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT current_balance FROM JRMI_ACCOUNT WHERE NUMBER = " + account + " AND FK_USER = '"
+                    + document_id + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                double current_balance = rs.getFloat("current_balance");
+                rs.close();
+                return current_balance;
+            } else {
+                rs.close();
+                return 0;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al consultar el balance de la cuenta " + account);
+            System.out.println(ex.getMessage());
+            return 0;
+        }
+    }
+
+    public boolean updateAccountBalance(Connection con, String document_id, Number account, double balance) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "UPDATE JRMI_ACCOUNT SET current_balance = " + balance + " WHERE FK_USER = '" + document_id
+                    + "' AND NUMBER = " + account + "";
+            stmt.execute(sql);
+
+            return true;
+        } catch (SQLException ex) {
+            System.out.println("Error al modificar el balance de la cuenta " + account);
+            System.out.println(ex.getMessage());
+            return false;
+        }
+    }
+
+    public int[] getAccountLastTransactions(Connection con, String document_id, Number account, int transactions) {
+        int[] trans = new int[transactions];
+        int num = 0;
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT JRMI_TRANSACTION.* FROM JRMI_TRANSACTION, JRMI_ACCOUNT WHERE NUMBER=" + account
+                    + " AND FK_USER='" + document_id + "' AND (FK_ACCOUNT_SOURCE = " + account
+                    + " OR FK_ACCOUNT_DESTINATION = " + account + ") ORDER BY date desc LIMIT " + transactions + "";
+            ResultSet rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                int account_number = rs.getInt("id");
+                trans[num] = account_number;
+                num++;
+            }
+            return trans;
+        } catch (SQLException ex) {
+            System.out.println("Error solicitar las transacciones de la cuenta " + account);
+            System.out.println(ex.getMessage());
+            return new int[0];
+        }
+    }
+
+    public String getAccountUser(Connection con, String document_id, Number account) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT NAME FROM JRMI_ACCOUNT JOIN JRMI_USER ON FK_USER = DOCUMENT_ID WHERE NUMBER = "
+                    + account + " AND DOCUMENT_ID = '" + document_id + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                String name = rs.getString("name");
+                rs.close();
+                return name;
+            } else {
+                rs.close();
+                return "";
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al consultar el propietario de la cuenta " + account);
+            System.out.println(ex.getMessage());
+            return "";
+        }
+    }
+
+    // TRANSACTIONS
+
+    public boolean deposit(Connection con, Number account, String description, Number amount) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "INSERT INTO JRMI_TRANSACTION(amount, description, type, fk_account_source, fk_account_destination) VALUES ("
+                    + amount + ", '" + description + "', 'deposit', null, " + account + ") RETURNING id";
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLException ex) {
+            System.out.println("Error al depositar en la cuenta " + account);
+            System.out.println(ex.getMessage());
+            return false;
         }
     }
 }

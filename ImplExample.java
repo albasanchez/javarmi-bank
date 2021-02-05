@@ -15,6 +15,15 @@ public class ImplExample implements RemoteInterface {
     System.out.println("This is an example RMI program");
   }
 
+  // Básico
+  public boolean verifyUser(String username, String password) {
+    return dataStorage.loginUser(con, username, password);
+  }
+
+  public String[] getUserAccounts(String documentID) {
+    return dataStorage.getUserAccounts(con, documentID);
+  }
+
   // Apertura de cuenta - Apartado 2.a
   public boolean checkDocumentID(String documentID) {
     return dataStorage.checkUserDocument(con, documentID);
@@ -25,14 +34,34 @@ public class ImplExample implements RemoteInterface {
   }
 
   public boolean checkMaxAccounts(String documentID) {
-    return dataStorage.getUserAccounts(con, documentID);
-  }
-
-  public boolean verifyUser(String username, String password) {
-    return dataStorage.loginUser(con, username, password);
+    return dataStorage.checkUserAccountLimit(con, documentID);
   }
 
   public Number intialDeposit(String documentID, double deposit) {
-    return dataStorage.createAccount(con, deposit, documentID);
+    Number acc = dataStorage.createAccount(con, deposit, documentID);
+    dataStorage.deposit(con, acc, "Depósito inicial", deposit);
+    return acc;
+  }
+
+  // Consulta de cuenta
+  public double getAccountBalance(String documentID, Number account) {
+    return dataStorage.getAccountBalance(con, documentID, account);
+  }
+
+  public int[] getAccountLastTransactions(String documentID, Number account) {
+    return dataStorage.getAccountLastTransactions(con, documentID, account, 5);
+  }
+
+  // Confirmación cuenta de terceros
+  public String getAccountUser(String documentID, Number account) {
+    return dataStorage.getAccountUser(con, documentID, account);
+  }
+
+  // Depósito a cuenta
+  public boolean deposit(String documentID, Number account, String description, double amount) {
+    double balance = dataStorage.getAccountBalance(con, documentID, account);
+    balance = balance + amount;
+    dataStorage.updateAccountBalance(con, documentID, account, balance);
+    return dataStorage.deposit(con, account, description, amount);
   }
 }

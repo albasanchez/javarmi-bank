@@ -21,9 +21,9 @@ CREATE TABLE JRMI_ACCOUNT (
 );
 
 CREATE TABLE JRMI_TRANSACTION (
-	id integer primary key,
+	id serial primary key,
 	amount float NOT NULL,
-	date timestamp NOT NULL,
+	date timestamp NOT NULL DEFAULT NOW(),
 	description varchar NOT NULL,
 	type varchar NOT NULL,
 	fk_account_source integer,
@@ -33,3 +33,7 @@ CREATE TABLE JRMI_TRANSACTION (
 	CONSTRAINT check_constraint_type CHECK(type IN ('deposit', 'withdrawal', 'transference'))
 );
 
+-- DROP TABLE JRMI_TRANSACTION;
+-- DROP TABLE JRMI_ACCOUNT;
+-- DROP TABLE JRMI_USER;
+-- DROP SEQUENCE ACCOUNT_SEQ;
