@@ -1,95 +1,109 @@
-import java.io.File;
-// import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-// import javax.xml.xpath.XPath;
-// import javax.xml.xpath.XPathConstants;
-// import javax.xml.xpath.XPathExpressionException;
-// import javax.xml.xpath.XPathFactory;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-// import org.w3c.dom.Node;
-// import org.w3c.dom.NodeList;
-// import org.xml.sax.SAXException;
+import java.sql.*;
 
 public class DataStorage {
-  static DocumentBuilderFactory documentBuilderFactory;
-  static DocumentBuilder documentBuilder;
-  private String file_name = "data/data.xml";
-  
-  public DataStorage() {
-    try {
-      documentBuilderFactory = DocumentBuilderFactory.newInstance();
-      documentBuilderFactory.setNamespaceAware(false);
-      documentBuilderFactory.setValidating(false);
-      documentBuilderFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-      documentBuilderFactory.setFeature("http://xml.org/sax/features/validation", false);
-      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
-      documentBuilder = documentBuilderFactory.newDocumentBuilder();
+    public Connection connectDatabase(String host, String port, String database, String user, String password) {
+        Connection connection = null;
+        String url = "";
+        try {
+            // We register PostgreSQL driver
+            try {
+                Class.forName("org.postgresql.Driver");
+            } catch (ClassNotFoundException ex) {
+                System.out.println("Error al registrar el driver de PostgreSQL: " + ex);
+            }
 
-    } catch (ParserConfigurationException ex) {
-      Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-    }
-  }
-
-  private Document createBlankDocument(File file) {
-    Document xml_document = documentBuilder.newDocument();
-    Element rootElement = xml_document.createElement("root");
-    xml_document.appendChild(rootElement);
-    writeInFile(xml_document, file);
-    return xml_document;
-  }
-
-  private void writeInFile(Document document, File file) {
-    try {
-      TransformerFactory transformerFactory = TransformerFactory.newInstance();
-      Transformer transformer = transformerFactory.newTransformer();
-      DOMSource source = new DOMSource(document);
-      StreamResult result = new StreamResult(file);
-      transformer.transform(source, result);
-    } catch (TransformerException tfe) {
-      tfe.printStackTrace();
-    }
-  }
-
-  public void registerUser(User user) {
-    Document xml_document;
-    File file = new File(file_name);
-
-    try {
-      xml_document = documentBuilder.parse(file);
-    } catch (Exception ex) {
-      xml_document = createBlankDocument(file);
+            url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+            // Database connect
+            connection = DriverManager.getConnection(url, user, password);
+            boolean valid = connection.isValid(50000);
+            System.out.println(valid ? "Conexión exitosa a la BD" : "Error en la conexión a la BD");
+        } catch (java.sql.SQLException sqle) {
+            System.out.println("Error al conectar con la base de datos de PostgreSQL (" + url + "): " + sqle);
+        }
+        return connection;
     }
 
-    Element root = xml_document.getDocumentElement();
-    Element xml_user = xml_document.createElement("user");
-    
-    Attr attr_id = xml_document.createAttribute("id");
-    attr_id.setValue(user.document_id);
-    xml_user.setAttributeNode(attr_id);
-    Attr attr_name = xml_document.createAttribute("name");
-    attr_name.setValue(user.name);
-    xml_user.setAttributeNode(attr_name);
-    Attr attr_username = xml_document.createAttribute("username");
-    attr_username.setValue(user.username);
-    xml_user.setAttributeNode(attr_username);
-    Attr attr_password = xml_document.createAttribute("password");
-    attr_password.setValue(user.password);
-    xml_user.setAttributeNode(attr_password);
-    root.appendChild(xml_user);
-    
-    writeInFile(xml_document, file);
-  }
+    public void getUserAccounts(Connection con, String user_id) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT document_id, COUNT(JRMI_ACCOUNT.number) AS accounts FROM JRMI_USER LEFT OUTER JOIN JRMI_ACCOUNT ON document_id=fk_user WHERE document_id = '"
+                    + user_id + "' GROUP BY document_id;";
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                // Retrieve by column name
+                int id = rs.getInt("document_id");
+                int accounts = rs.getInt("accounts");
+                System.out.println("El usuario " + id + " tiene " + accounts + " cuentas");
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            System.out.println("Error al consultar las cuentas del usuario " + user_id);
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public void registerUser(Connection con, User user) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "INSERT INTO JRMI_USER(document_id, name, username, password) VALUES ('" + user.document_id
+                    + "', '" + user.name + "', '" + user.username + "', '" + user.password + "') RETURNING document_id";
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                System.out.println("Se registró el usuario " + user.username);
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            System.out.println("Error al registrar el usuario " + user.username);
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public void loginUser(Connection con, String username, String password) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "SELECT * FROM JRMI_USER WHERE username = '" + username + "' AND password='" + password + "'";
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                // Retrieve by column name
+                int id = rs.getInt("document_id");
+                System.out.println("El usuario " + id + " inició sesión correctamente");
+            } else {
+                System.out.println("El usuario " + username + " no inició sesión correctamente");
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            System.out.println("Error al realizar el login del usuario " + username);
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public void createAccount(Connection con, Number current_balance, String document_id) {
+        try {
+            Statement stmt = con.createStatement();
+            String sql = "INSERT INTO JRMI_ACCOUNT(current_balance, fk_user) VALUES (" + current_balance
+                    + ", '" + document_id  + "') RETURNING number";
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                int number = rs.getInt("number");
+                System.out.println("Se registró la cuenta " + number);
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            System.out.println("Error al registrar la cuenta del usuario " + document_id);
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        DataStorage dataStorage = new DataStorage();
+        Connection con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "131619131619");
+        User user = new User("5678", "miguel", "mpena", "124");
+        // dataStorage.getUserAccounts(con, user.document_id);
+        // dataStorage.registerUser(con, user);
+        // dataStorage.loginUser(con, user.username, user.password);
+        // dataStorage.createAccount(con, 15, user.document_id);
+    }
 }
