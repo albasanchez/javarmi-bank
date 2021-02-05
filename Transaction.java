@@ -1,6 +1,6 @@
 import java.sql.Date;
 
-public class Transaction {
+public class Transaction implements java.io.Serializable{
   private int id;
   private Double amount;
   private Date date;

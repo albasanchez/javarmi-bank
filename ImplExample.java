@@ -8,7 +8,7 @@ public class ImplExample implements RemoteInterface {
 
   public ImplExample() {
     dataStorage = new DataStorage();
-    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "131619131619");
+    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "MIGuel33&&");
   }
 
   // Implementing the interface method
