@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.*;
 
 // Implementing the remote interface 
 public class ImplExample implements RemoteInterface {
@@ -7,7 +8,7 @@ public class ImplExample implements RemoteInterface {
 
   public ImplExample() {
     dataStorage = new DataStorage();
-    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "131619131619");
+    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "pass");
   }
 
   // Implementing the interface method
@@ -20,7 +21,7 @@ public class ImplExample implements RemoteInterface {
     return dataStorage.loginUser(con, username, password);
   }
 
-  public String[] getUserAccounts(String documentID) {
+  public List<String> getUserAccounts(String documentID) {
     return dataStorage.getUserAccounts(con, documentID);
   }
 
@@ -48,7 +49,7 @@ public class ImplExample implements RemoteInterface {
     return dataStorage.getAccountBalance(con, documentID, account);
   }
 
-  public int[] getAccountLastTransactions(String documentID, Number account) {
+  public List<Transaction> getAccountLastTransactions(String documentID, Number account) {
     return dataStorage.getAccountLastTransactions(con, documentID, account, 5);
   }
 
@@ -58,10 +59,15 @@ public class ImplExample implements RemoteInterface {
   }
 
   // Depósito a cuenta
-  public boolean deposit(String documentID, Number account, String description, double amount) {
+  public double deposit(String documentID, Number account, String description, double amount) {
     double balance = dataStorage.getAccountBalance(con, documentID, account);
     balance = balance + amount;
-    dataStorage.updateAccountBalance(con, documentID, account, balance);
-    return dataStorage.deposit(con, account, description, amount);
+    boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
+    boolean deposit = dataStorage.deposit(con, account, description, amount);
+    if (update && deposit) {
+      return balance;
+    } else {
+      return -1;
+    }
   }
 }

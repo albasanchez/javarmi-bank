@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.*;
 
 public class DataStorage {
 
@@ -133,23 +134,21 @@ public class DataStorage {
         }
     }
 
-    public String[] getUserAccounts(Connection con, String document_id) {
-        String[] accounts = new String[3];
-        int num = 0;
+    public List<String> getUserAccounts(Connection con, String document_id) {
+        List<String> accounts = new ArrayList<String>();
         try {
             Statement stmt = con.createStatement();
             String sql = "SELECT * FROM JRMI_ACCOUNT WHERE FK_USER = '" + document_id + "'";
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 String account_number = rs.getString("number");
-                accounts[num] = account_number;
-                num++;
+                accounts.add(account_number);
             }
             return accounts;
         } catch (SQLException ex) {
             System.out.println("Error solicitar las cuentas del usuario " + document_id);
             System.out.println(ex.getMessage());
-            return new String[0];
+            return new ArrayList<String>();
         }
     }
 
@@ -166,12 +165,12 @@ public class DataStorage {
                 return current_balance;
             } else {
                 rs.close();
-                return 0;
+                return -1;
             }
         } catch (SQLException ex) {
             System.out.println("Error al consultar el balance de la cuenta " + account);
             System.out.println(ex.getMessage());
-            return 0;
+            return -1;
         }
     }
 
@@ -190,9 +189,9 @@ public class DataStorage {
         }
     }
 
-    public int[] getAccountLastTransactions(Connection con, String document_id, Number account, int transactions) {
-        int[] trans = new int[transactions];
-        int num = 0;
+    public List<Transaction> getAccountLastTransactions(Connection con, String document_id, Number account,
+            int transactions) {
+        List<Transaction> trans = new ArrayList<Transaction>();
         try {
             Statement stmt = con.createStatement();
             String sql = "SELECT JRMI_TRANSACTION.* FROM JRMI_TRANSACTION, JRMI_ACCOUNT WHERE NUMBER=" + account
@@ -200,15 +199,16 @@ public class DataStorage {
                     + " OR FK_ACCOUNT_DESTINATION = " + account + ") ORDER BY date desc LIMIT " + transactions + "";
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                int account_number = rs.getInt("id");
-                trans[num] = account_number;
-                num++;
+                Transaction new_transaction = new Transaction(rs.getInt("id"), rs.getDouble("amount"),
+                        rs.getDate("date"), rs.getString("description"), rs.getString("type"), rs.getInt("source"),
+                        rs.getInt("destination"));
+                trans.add(new_transaction);
             }
             return trans;
         } catch (SQLException ex) {
             System.out.println("Error solicitar las transacciones de la cuenta " + account);
             System.out.println(ex.getMessage());
-            return new int[0];
+            return new ArrayList<Transaction>();
         }
     }
 
