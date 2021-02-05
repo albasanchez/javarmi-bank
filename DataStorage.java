@@ -200,8 +200,8 @@ public class DataStorage {
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 Transaction new_transaction = new Transaction(rs.getInt("id"), rs.getDouble("amount"),
-                        rs.getDate("date"), rs.getString("description"), rs.getString("type"), rs.getInt("source"),
-                        rs.getInt("destination"));
+                        rs.getDate("date"), rs.getString("description"), rs.getString("type"), rs.getInt("FK_ACCOUNT_SOURCE"),
+                        rs.getInt("FK_ACCOUNT_DESTINATION"));
                 trans.add(new_transaction);
             }
             return trans;

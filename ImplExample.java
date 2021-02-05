@@ -8,7 +8,7 @@ public class ImplExample implements RemoteInterface {
 
   public ImplExample() {
     dataStorage = new DataStorage();
-    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "pass");
+    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "131619131619");
   }
 
   // Implementing the interface method
@@ -69,5 +69,11 @@ public class ImplExample implements RemoteInterface {
     } else {
       return -1;
     }
+  }
+
+  public static void main(String args[]) {
+    ImplExample i = new ImplExample();
+    List<Transaction> t = i.getAccountLastTransactions("11111", 3000);
+    System.out.println(t);
   }
 }
