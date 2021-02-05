@@ -10,5 +10,5 @@ public interface RemoteInterface extends Remote {
    boolean registerClient(String documentID, String name, String username, String password) throws RemoteException;
    boolean checkMaxAccounts(String documentID) throws RemoteException;
    boolean verifyUser(String username, String password) throws RemoteException;
-   String intialDeposit(float deposit) throws RemoteException;
+   String intialDeposit(double deposit) throws RemoteException;
 } 

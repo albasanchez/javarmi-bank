@@ -31,7 +31,7 @@ public class ImplExample implements RemoteInterface {
     return true;  
   } 
 
-  public String intialDeposit(float deposit) {  
+  public String intialDeposit(double deposit) {  
     System.out.println("Depósito inicial: " + deposit); 
     return "4455-ALPO-555-44-22252";  
   } 
