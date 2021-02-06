@@ -75,10 +75,29 @@ public class ImplExample implements RemoteInterface {
 
   // Depósito a cuenta
   public double deposit(String documentID, Number account, String description, double amount) {
-    double balance = dataStorage.getAccountBalance(con, documentID, account);
-    balance = balance + amount;
-    boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
-    boolean deposit = dataStorage.transaction(con, null, account, TransactionType.deposit.toString(), description, amount);
+    boolean update = false;
+    boolean deposit = false;
+    double balance = -1;
+    try{
+      con.setAutoCommit(false);
+      balance = dataStorage.getAccountBalance(con, documentID, account);
+      balance = balance + amount;
+      update = dataStorage.updateAccountBalance(con, documentID, account, balance);
+      deposit = dataStorage.transaction(con, null, account, TransactionType.deposit.toString(), description, amount);
+      con.commit();
+    } catch (Exception e) {
+      try {
+        con.rollback();
+      } catch (SQLException sqle) {
+        sqle.printStackTrace();
+      }
+    } finally {
+      try {
+        con.setAutoCommit(true);
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
     if (update && deposit) {
       return balance;
     } else {
@@ -88,10 +107,29 @@ public class ImplExample implements RemoteInterface {
 
   // Retiro de cuenta
   public double withdrawal(String documentID, Number account, double amount) {
-    double balance = dataStorage.getAccountBalance(con, documentID, account);
-    balance = balance - amount;
-    boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
-    boolean withdrawal = dataStorage.transaction(con, null, account, TransactionType.withdrawal.toString(), "Retiro", amount);
+    boolean update = false;
+    boolean withdrawal = false;
+    double balance = -1;
+    try {
+      con.setAutoCommit(false);
+      balance = dataStorage.getAccountBalance(con, documentID, account);
+      balance = balance - amount;
+      update = dataStorage.updateAccountBalance(con, documentID, account, balance);
+      withdrawal = dataStorage.transaction(con, null, account, TransactionType.withdrawal.toString(), "Retiro", amount);
+      con.commit();
+    } catch (Exception e) {
+      try {
+        con.rollback();
+      } catch (SQLException sqle) {
+        sqle.printStackTrace();
+      }
+    } finally {
+      try {
+        con.setAutoCommit(true);
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    }
     if (update && withdrawal) {
       return balance;
     } else {
@@ -115,12 +153,17 @@ public class ImplExample implements RemoteInterface {
       destinationUpdate = dataStorage.updateAccountBalance(con, destinationDocumentID, destinationAccount, destinationBalance);
       transference = dataStorage.transaction(con, sourceAccount, destinationAccount, TransactionType.transference.toString(), description, amount);
       con.commit();
-      con.setAutoCommit(true);
     } catch (Exception e) {
       try {
         con.rollback();
       } catch (SQLException sqle) {
         sqle.printStackTrace();
+      }
+    } finally {
+      try {
+        con.setAutoCommit(true);
+      } catch (SQLException e) {
+        e.printStackTrace();
       }
     }
     if (sourceUpdate && destinationUpdate && transference) {
