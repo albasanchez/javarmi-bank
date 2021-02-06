@@ -8,7 +8,7 @@ public class ImplExample implements RemoteInterface {
 
   public ImplExample() {
     dataStorage = new DataStorage();
-    con = dataStorage.connectDatabase("127.0.0.1", "5432", "JRMI", "postgres", "MIGuel33&&");
+    con = dataStorage.connectDatabase("127.0.0.1", "5432", "postgres", "postgres", "gabo");
   }
 
   // Implementing the interface method
@@ -65,6 +65,18 @@ public class ImplExample implements RemoteInterface {
     boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
     boolean deposit = dataStorage.deposit(con, account, description, amount);
     if (update && deposit) {
+      return balance;
+    } else {
+      return -1;
+    }
+  }
+
+   //Retiro de cuenta
+  public double withdrawal(String documentID, Number account, double amount) {
+    double balance = dataStorage.getAccountBalance(con, documentID, account);
+    balance = balance - amount;
+    boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
+    if (update) {
       return balance;
     } else {
       return -1;
