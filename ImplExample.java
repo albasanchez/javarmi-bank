@@ -71,7 +71,7 @@ public class ImplExample implements RemoteInterface {
     }
   }
 
-   //Retiro de cuenta
+  //Retiro de cuenta
   public double withdrawal(String documentID, Number account, double amount) {
     double balance = dataStorage.getAccountBalance(con, documentID, account);
     balance = balance - amount;
@@ -81,11 +81,5 @@ public class ImplExample implements RemoteInterface {
     } else {
       return -1;
     }
-  }
-
-  public static void main(String args[]) {
-    ImplExample i = new ImplExample();
-    List<Transaction> t = i.getAccountLastTransactions("11111", 3000);
-    System.out.println(t);
   }
 }
