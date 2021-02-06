@@ -1,14 +1,25 @@
 import java.sql.*;
 import java.util.*;
+import java.io.InputStream;
+import java.io.FileInputStream;
 
 // Implementing the remote interface 
 public class ImplExample implements RemoteInterface {
   DataStorage dataStorage;
   static Connection con;
+  Properties config = new Properties();
+  InputStream configInput = null;
 
   public ImplExample() {
     dataStorage = new DataStorage();
-    con = dataStorage.connectDatabase("127.0.0.1", "5432", "postgres", "postgres", "gabo");
+    try {
+      configInput = new FileInputStream("config.properties");
+      config.load(configInput);
+    } catch (Exception e) {
+      System.out.println("Error cargando configuración\n" + e.getMessage());
+    }
+    con = dataStorage.connectDatabase(config.getProperty("DB_HOST"), config.getProperty("DB_PORT"),
+        config.getProperty("DB_NAME"), config.getProperty("DB_USER"), config.getProperty("DB_PASSWORD"));
   }
 
   // Implementing the interface method
@@ -71,7 +82,7 @@ public class ImplExample implements RemoteInterface {
     }
   }
 
-  //Retiro de cuenta
+  // Retiro de cuenta
   public double withdrawal(String documentID, Number account, double amount) {
     double balance = dataStorage.getAccountBalance(con, documentID, account);
     balance = balance - amount;
