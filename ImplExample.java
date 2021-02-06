@@ -3,7 +3,11 @@ import java.util.*;
 import java.io.InputStream;
 import java.io.FileInputStream;
 
-// Implementing the remote interface 
+enum TransactionType {
+  deposit, withdrawal, transference;
+}
+
+// Implementing the remote interface
 public class ImplExample implements RemoteInterface {
   DataStorage dataStorage;
   static Connection con;
@@ -51,7 +55,7 @@ public class ImplExample implements RemoteInterface {
 
   public Number intialDeposit(String documentID, double deposit) {
     Number acc = dataStorage.createAccount(con, deposit, documentID);
-    dataStorage.deposit(con, acc, "Depósito inicial", deposit);
+    dataStorage.transaction(con, null, acc, TransactionType.deposit.toString(), "Depósito inicial", deposit);
     return acc;
   }
 
@@ -74,7 +78,7 @@ public class ImplExample implements RemoteInterface {
     double balance = dataStorage.getAccountBalance(con, documentID, account);
     balance = balance + amount;
     boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
-    boolean deposit = dataStorage.deposit(con, account, description, amount);
+    boolean deposit = dataStorage.transaction(con, null, account, TransactionType.deposit.toString(), description, amount);
     if (update && deposit) {
       return balance;
     } else {
@@ -87,8 +91,40 @@ public class ImplExample implements RemoteInterface {
     double balance = dataStorage.getAccountBalance(con, documentID, account);
     balance = balance - amount;
     boolean update = dataStorage.updateAccountBalance(con, documentID, account, balance);
-    if (update) {
+    boolean withdrawal = dataStorage.transaction(con, null, account, TransactionType.withdrawal.toString(), "Retiro", amount);
+    if (update && withdrawal) {
       return balance;
+    } else {
+      return -1;
+    }
+  }
+
+  // Transferencia entre cuentas
+  public double transference(String sourceDocumentID, String destinationDocumentID, Number sourceAccount, Number destinationAccount, String description, double amount) {
+    boolean sourceUpdate = false;
+    double sourceBalance = -1;
+    boolean destinationUpdate = false;
+    boolean transference = false;
+    try {
+      con.setAutoCommit(false);
+      sourceBalance = dataStorage.getAccountBalance(con, sourceDocumentID, sourceAccount);
+      sourceBalance = sourceBalance - amount;
+      sourceUpdate = dataStorage.updateAccountBalance(con, sourceDocumentID, sourceAccount, sourceBalance);
+      double destinationBalance = dataStorage.getAccountBalance(con, destinationDocumentID, destinationAccount);
+      destinationBalance = destinationBalance + amount;
+      destinationUpdate = dataStorage.updateAccountBalance(con, destinationDocumentID, destinationAccount, destinationBalance);
+      transference = dataStorage.transaction(con, sourceAccount, destinationAccount, TransactionType.transference.toString(), description, amount);
+      con.commit();
+      con.setAutoCommit(true);
+    } catch (Exception e) {
+      try {
+        con.rollback();
+      } catch (SQLException sqle) {
+        sqle.printStackTrace();
+      }
+    }
+    if (sourceUpdate && destinationUpdate && transference) {
+      return sourceBalance;
     } else {
       return -1;
     }

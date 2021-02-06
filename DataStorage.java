@@ -237,11 +237,11 @@ public class DataStorage {
 
     // TRANSACTIONS
 
-    public boolean deposit(Connection con, Number account, String description, Number amount) {
+    public boolean transaction(Connection con, Number sourceAccount, Number destinationAccount, String transactionType, String description, Number amount) {
         try {
             Statement stmt = con.createStatement();
             String sql = "INSERT INTO JRMI_TRANSACTION(amount, description, type, fk_account_source, fk_account_destination) VALUES ("
-                    + amount + ", '" + description + "', 'deposit', null, " + account + ") RETURNING id";
+                    + amount + ", '" + description + "', '" + transactionType + "', " + sourceAccount + ", " + destinationAccount + ") RETURNING id";
             ResultSet rs = stmt.executeQuery(sql);
             if (rs.next()) {
                 return true;
@@ -249,7 +249,7 @@ public class DataStorage {
                 return false;
             }
         } catch (SQLException ex) {
-            System.out.println("Error al depositar en la cuenta " + account);
+            System.out.println("Error en la transacción de tipo: " + transactionType + ", Cuenta origen: " + sourceAccount + ", Cuenta destino: " + destinationAccount);
             System.out.println(ex.getMessage());
             return false;
         }

@@ -28,4 +28,7 @@ public interface RemoteInterface extends Remote {
 
    //Retiro de cuenta
    double withdrawal(String documentID, Number account, double amount) throws RemoteException;
+
+   //Transferencia entre cuentas
+   double transference(String sourceDocumentID, String destinationDocumentID, Number sourceAccount, Number destinationAccount, String description, double amount) throws RemoteException;
 } 
