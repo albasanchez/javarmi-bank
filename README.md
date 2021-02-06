@@ -30,3 +30,5 @@
    > En caso de estar utilizando VSCode, se debe hacer click al botón de Run o realizar F5 desde el archivo ./Server.java. Esto para que el Driver sea registrado satisfactoriamente en la compilación del código
    - java Server
 3. [Iniciar el cliente ATM](https://github.com/albasanchez/javarmi-atm)
+
+**NOTA**: Cada vez que el servidor se detiene es necesario reiniciar el rmiregistry
