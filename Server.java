@@ -14,8 +14,9 @@ public class Server extends ImplExample {
         
          // Binding the remote object (stub) in the registry 
          Registry registry = LocateRegistry.getRegistry(); 
-        
-         registry.bind("RMI-INTERFACE", stub);  
+         
+         registry.rebind("RMI-INTERFACE", stub);
+
          System.err.println("Server ready"); 
       } catch (Exception e) { 
          System.err.println("Server exception: " + e.toString()); 
