@@ -67,10 +67,11 @@ public class DataStorage {
         }
     }
 
-    public boolean loginUser(Connection con, String username, String password) {
+    public boolean loginUser(Connection con, String document_id, String username, String password) {
         try {
             Statement stmt = con.createStatement();
-            String sql = "SELECT * FROM JRMI_USER WHERE username = '" + username + "' AND password='" + password + "'";
+            String sql = "SELECT * FROM JRMI_USER WHERE document_id = '" + document_id
+                    + "' AND username = '" + username + "' AND password='" + password + "'";
             ResultSet rs = stmt.executeQuery(sql);
 
             if (rs.next()) {

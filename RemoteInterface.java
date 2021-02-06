@@ -7,7 +7,7 @@ public interface RemoteInterface extends Remote {
    void printMsg() throws RemoteException;
 
    //Básico
-   boolean verifyUser(String username, String password) throws RemoteException;
+   boolean verifyUser(String documentID, String username, String password) throws RemoteException;
    List<String> getUserAccounts(String documentID) throws RemoteException;
    
    //Apertura de cuenta - Apartado 2.a

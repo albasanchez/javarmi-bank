@@ -17,8 +17,8 @@ public class ImplExample implements RemoteInterface {
   }
 
   // Básico
-  public boolean verifyUser(String username, String password) {
-    return dataStorage.loginUser(con, username, password);
+  public boolean verifyUser(String documentID, String username, String password) {
+    return dataStorage.loginUser(con, documentID, username, password);
   }
 
   public List<String> getUserAccounts(String documentID) {
